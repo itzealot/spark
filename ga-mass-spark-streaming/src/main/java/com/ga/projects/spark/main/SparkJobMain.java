@@ -15,6 +15,12 @@ import com.ga.projects.spark.streaming.StreamProcessDemo;
 import com.ga.projects.spark.util.KafkaUtils;
 import com.ga.projects.spark.util.SparkConfUtil;
 
+/**
+ * 提交Streaming job
+ * 
+ * @author zealot
+ *
+ */
 public class SparkJobMain {
 
 	private final static Logger LOG = LoggerFactory.getLogger(SparkJobMain.class);

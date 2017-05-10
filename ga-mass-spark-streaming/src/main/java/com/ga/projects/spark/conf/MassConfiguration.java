@@ -4,6 +4,12 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
+/**
+ * 配置文件读取
+ * 
+ * @author zealot
+ *
+ */
 public class MassConfiguration {
 
 	private Configuration config;

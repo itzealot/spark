@@ -22,7 +22,7 @@ import kafka.common.TopicAndPartition;
 /**
  * 辅助处理类. 抽取信息等.
  * 
- * @author liuchen
+ * @author zealot
  *
  */
 @SuppressWarnings("serial")

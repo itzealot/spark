@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
-public class ZkUtils {
+public final class ZkUtils {
 
 	private static Logger LOG = LoggerFactory.getLogger(ZkUtils.class);
 
@@ -115,4 +115,6 @@ public class ZkUtils {
 		}
 	}
 
+	private ZkUtils() {
+	}
 }
