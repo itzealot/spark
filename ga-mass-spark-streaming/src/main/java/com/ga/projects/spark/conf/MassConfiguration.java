@@ -24,7 +24,8 @@ public class MassConfiguration {
 				config = new PropertiesConfiguration("conf.properties");
 			}
 		} catch (ConfigurationException e) {
-			e.printStackTrace();
+			throw new IllegalArgumentException(String.format("load config:%s fail, please to check.", CONFIG_DIR_NAME),
+					e);
 		}
 	}
 
