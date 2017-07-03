@@ -1,0 +1,97 @@
+### 根据 TimeAllCertificationTrack 分析出身份的时间段轨迹，存入 TimeSliceCertificationTrack
+
+# 采用离线计算的方式计算步骤：<br>
+# 1.从 TimeAllCertificationTrack 表按startTime递增, endTime递增的顺序查询出所有的轨迹进行分析.<br>
+# 2.合并所有的数据，在时间范围内(时间间隔在指定范围内认为是在该场所内逗留)则轨迹进行合并；否则认为是新的记录.<br>
+# 3.结果合并写入表 TimeSliceCertificationTrack
+# 4.后续的业务分析都基于 TimeSliceCertificationTrack 进行统计分析
+
+### 按天合并的身份的轨迹信息，即一个身份在一天内对场所信息的合并
+# sql:select id, idType, serviceCode, min(provinceCode), min(cityCode), min(areaCode), min(startTime) as minStartTime, max(endTime) as maxEndTime, sum(lingerTime) as sumLingerTime, min(lingerTime) as minLingerTime, max(lingerTime) as maxLingerTime, sum(times) as sumTimes from TimeSliceCertificationTrack group by id, idType, serviceCode [where ...];
+
+### 若是按月，则直接进行按月统计即可，前提是支持这么大量数据的统计分析，当然也可以基于当前表抽取出对应的日表统计、周表统计
+
+
+### 表 TimeSliceCertificationTrack 字段说明
+/**
+ * 身份证号，没有则为 null，用于后续人的关联，是否有必要
+ */
+String certCode;
+
+/**
+ * 手机号，没有则为 null，用于后续人的关联，是否有必要
+ */
+String phone;
+
+/**
+ * IMEI，没有则为 null，用于后续人的关联，是否有必要
+ */
+String imei;
+
+/**
+ * IMSI，没有则为 null，用于后续人的关联，是否有必要
+ */
+String imsi;
+
+/**
+ * 身份，如 MAC 地址
+ */
+String id;
+
+/**
+ * 身份所属协议，如 MAC 对应的协议编号为 1020002
+ */
+String idType;
+
+/**
+ * 身份出现的场所编码、省编码、市编码、县编码
+ */
+String provinceCode; // 省编码
+String cityCode; // 市编码
+String areaCode; // 区域编码
+String serviceCode; // 场所编码
+
+/**
+ * 在场所中一段时间内的首次出现时间
+ */
+long startTime;
+
+/**
+ * 在场所中一段时间内的最后一次出现时间
+ */
+long endTime;
+
+/**
+ * 逗留时长，为 endTime-startTime 的绝对秒数
+ */
+int lingerTime;
+
+/**
+ * 当天在某场所的累计出现次数，一条记录则记为出现一次
+ */
+int times;
+
+/**
+ * 最近出现的系统来源
+ */
+short sysSource;
+
+/**
+ * 最近出现的来源
+ */
+short source;
+
+/**
+ * 最近出现的厂商
+ */
+String companyId;
+
+/**
+ * 创建时间，绝对秒数
+ */
+long createTime;
+
+/**
+ * 按天分区时间，分区like: 20170703
+ */
+String startTimeP;
