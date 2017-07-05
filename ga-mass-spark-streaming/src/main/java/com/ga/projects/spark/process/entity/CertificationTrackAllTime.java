@@ -1,17 +1,17 @@
 package com.ga.projects.spark.process.entity;
 
 /**
- * 按天合并的身份的轨迹信息，即一个身份在一天内对场所信息的合并
+ * 身份在一天内的所有轨迹(可以是5分钟内合并后的轨迹).<br>
  * 
- * select id, idType, serviceCode, min(provinceCode), min(cityCode),
- * min(areaCode), min(startTime) as minStartTime, max(endTime) as maxEndTime,
- * sum(lingerTime) as sumLingerTime from TimeSliceCertificationTrack group by
- * id, idType, serviceCode [where ...]
+ * why:<br>
+ * 身份的数据量太大，由此可以减少TimeSliceCertificationTrack表的合并数据量，合并的规则需要确定，即在一批入库的数据里进行合并，按照
+ * idNo+idType+serviceCode+startTimeP来合并(需要根据value按时间排序而后再合并)，合并规则即时间在运行范围内的数据才需要合并。
  * 
  * @author zealot
  *
  */
-public class DayCertificationTrack {
+public class CertificationTrackAllTime {
+
 	/**
 	 * 身份证号，没有则为 null，用于后续人的关联
 	 */
@@ -33,7 +33,7 @@ public class DayCertificationTrack {
 	private String imsi;
 
 	/**
-	 * 身份，如 MAC 地址
+	 * 身份记录中存在的身份信息(有多个身份则需要拆分多条记录)，如 MAC 地址
 	 */
 	private String id;
 
@@ -48,40 +48,26 @@ public class DayCertificationTrack {
 	private String provinceCode; // 省编码
 	private String cityCode; // 市编码
 	private String areaCode; // 区域编码
+	private String policeCoe; // 派出所编码
 	private String serviceCode; // 场所编码
 
 	/**
-	 * 在场所内的首次出现时间，一天之中首次出现的时间
+	 * 在场所内的首次出现时间，分区时间
 	 */
 	private long startTime;
 
 	/**
-	 * 在场所内的最后一次出现时间，一天之中最后一次出现的时间
+	 * 在场所内的最后一次出现时间
 	 */
 	private long endTime;
 
 	/**
-	 * 在场所内一天的总逗留时长
-	 */
-	private int lingerTime;
-
-	/**
-	 * 在场所内的最大逗留时长
-	 */
-	private int maxLingerTime;
-
-	/**
-	 * 在场所内的最小逗留时长
-	 */
-	private int minLingerTime;
-
-	/**
-	 * 当天在某场所的累计出现次数
+	 * 出现次数，一条记录一次
 	 */
 	private int times;
 
 	/**
-	 * 最近出现的大类
+	 * 最近出现的系统来源
 	 */
 	private short sysSource;
 
@@ -177,6 +163,14 @@ public class DayCertificationTrack {
 		this.areaCode = areaCode;
 	}
 
+	public String getPoliceCoe() {
+		return policeCoe;
+	}
+
+	public void setPoliceCoe(String policeCoe) {
+		this.policeCoe = policeCoe;
+	}
+
 	public String getServiceCode() {
 		return serviceCode;
 	}
@@ -199,30 +193,6 @@ public class DayCertificationTrack {
 
 	public void setEndTime(long endTime) {
 		this.endTime = endTime;
-	}
-
-	public int getLingerTime() {
-		return lingerTime;
-	}
-
-	public void setLingerTime(int lingerTime) {
-		this.lingerTime = lingerTime;
-	}
-
-	public int getMaxLingerTime() {
-		return maxLingerTime;
-	}
-
-	public void setMaxLingerTime(int maxLingerTime) {
-		this.maxLingerTime = maxLingerTime;
-	}
-
-	public int getMinLingerTime() {
-		return minLingerTime;
-	}
-
-	public void setMinLingerTime(int minLingerTime) {
-		this.minLingerTime = minLingerTime;
 	}
 
 	public int getTimes() {
