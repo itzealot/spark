@@ -1,4 +1,4 @@
-package com.ga.projects.spark.process.support;
+package com.sky.project.share.streaming.api.support;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +15,9 @@ import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ga.projects.spark.process.StreamingKafkaContext;
-import com.ga.projects.spark.process.loader.StreamingKakfaLoader;
-import com.ga.projects.spark.process.message.MessageConverter;
+import com.sky.project.share.streaming.api.MessageConverter;
+import com.sky.project.share.streaming.api.StreamKafkaContext;
+import com.sky.project.share.streaming.api.StreamKakfaLoader;
 import com.sky.project.share.streaming.conf.SysContans;
 import com.sky.project.share.streaming.support.StreamHelper;
 
@@ -25,33 +25,27 @@ import kafka.message.MessageAndMetadata;
 import kafka.serializer.StringDecoder;
 
 /**
- * StreamKafkaLoaderImpl for loading Stream
+ * DefaultStreamKafkaLoader
  * 
  * @author zealot
- *
  * @param <T>
  */
 @SuppressWarnings("serial")
-public class StreamKafkaLoaderImpl<T> extends KryoSerializer
-		implements StreamingKafkaContext<T>, StreamingKakfaLoader<T> {
-	protected static final Logger LOG = LoggerFactory.getLogger(StreamKafkaLoaderImpl.class);
+public class DefaultStreamKafkaLoader<T> extends KryoSerializer implements StreamKakfaLoader<T> {
+	protected final Logger logger = LoggerFactory.getLogger(DefaultStreamKafkaLoader.class);
 
-	protected int reduceByKeyNum;
-	protected Map<String, String> certProtocolMap;
-	protected Map<String, String> macHasCompanyMap;
-	protected String mysqlConn;
-	protected String zkConn;
-	protected String groupId;
-	protected boolean enableIQ = false;
-	protected String brokers;
-	protected String streamingType;
-	protected Map<String, String> params;
-	protected JavaDStream<T> stream;
+	private Map<String, String> certProtocolMap;
+	private Map<String, String> macHasCompanyMap;
+	private int reduceByKeyNum;
+	private String mysqlConn;
+	private String brokers;
+	private String groupId;
+	private String zkConn;
+	private Map<String, Object> params;
 
-	public StreamKafkaLoaderImpl(SparkConf conf, Map<String, Broadcast<Map<String, String>>> broadcastRedisMap,
-			Map<String, Broadcast<String>> broadcastMap, String streamingType) {
+	public DefaultStreamKafkaLoader(SparkConf conf, Map<String, Broadcast<Map<String, String>>> broadcastRedisMap,
+			Map<String, Broadcast<String>> broadcastMap) {
 		super(conf);
-		this.streamingType = streamingType;
 		initFromBroadcast(broadcastRedisMap, broadcastMap);
 	}
 
@@ -63,10 +57,16 @@ public class StreamKafkaLoaderImpl<T> extends KryoSerializer
 	 */
 	private void initFromBroadcast(Map<String, Broadcast<Map<String, String>>> broadcastRedisMap,
 			Map<String, Broadcast<String>> broadcastMap) {
+		/** parameter init to map */
+		params.put("reduceByKeyNum", reduceByKeyNum);
+		params.put("mysqlConn", mysqlConn);
+		params.put("brokers", brokers);
+		params.put("groupId", groupId);
+		params.put("zkConn", zkConn);
 	}
 
 	@Override
-	public StreamingKafkaContext<T> kafkaLoad(JavaStreamingContext jssc, Map<String, String> kafkaParams, String topic,
+	public StreamKafkaContext<T> kafkaLoad(JavaStreamingContext jssc, Map<String, String> kafkaParams, String topic,
 			Map<Integer, Long> partionAndOffset, MessageConverter<T> converter) {
 		JavaDStream<String> kafkaStream = KafkaUtils.createDirectStream(jssc, String.class, String.class,
 				StringDecoder.class, StringDecoder.class, String.class, kafkaParams,
@@ -77,10 +77,11 @@ public class StreamKafkaLoaderImpl<T> extends KryoSerializer
 						return msgAndMd.message();
 					}
 				});
-		StreamHelper.updateOffsetToZk(kafkaStream, streamingType, zkConn, groupId);
+
+		StreamHelper.updateOffsetToZk(kafkaStream, converter.getStreamingType(), zkConn, groupId);
 
 		// flatMap
-		this.stream = kafkaStream.flatMap(new FlatMapFunction<String, T>() {
+		final JavaDStream<T> stream = kafkaStream.flatMap(new FlatMapFunction<String, T>() {
 			@Override
 			public Iterable<T> call(String line) {
 				String[] messages = line.split(SysContans.KAFKA_MESSAGES_SPLITER);
@@ -95,31 +96,33 @@ public class StreamKafkaLoaderImpl<T> extends KryoSerializer
 						lines.add(converter.update(message));
 					}
 				}
+
 				return lines;
 			}
 		});
 
-		return this;
-	}
+		// 每执行一次则返回新的实例
+		return new StreamKafkaContext<T>() {
+			@Override
+			public JavaDStream<T> getStream() {
+				return stream;
+			}
 
-	@Override
-	public JavaDStream<T> getStream() {
-		return stream;
-	}
+			@Override
+			public Map<String, Object> getParams() {
+				return params;
+			}
 
-	@Override
-	public Map<String, String> getParams() {
-		return params;
-	}
+			@Override
+			public Map<String, String> getCertProtocolMap() {
+				return certProtocolMap;
+			}
 
-	@Override
-	public Map<String, String> getCertProtocolMap() {
-		return certProtocolMap;
-	}
-
-	@Override
-	public Map<String, String> getMacHasCompanyMap() {
-		return macHasCompanyMap;
+			@Override
+			public Map<String, String> getMacHasCompanyMap() {
+				return macHasCompanyMap;
+			}
+		};
 	}
 
 }
