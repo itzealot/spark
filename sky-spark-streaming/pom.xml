@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.ga.projects.spark</groupId>
-	<artifactId>ga-mass-spark-streaming</artifactId>
+	<groupId>com.sky.projects.spark</groupId>
+	<artifactId>sky-spark-streaming</artifactId>
 	<version>4.0.0</version>
 	<packaging>jar</packaging>
 
